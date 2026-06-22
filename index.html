@@ -216,6 +216,128 @@
   body.light .aurora{opacity:.35;}
 
   @media(max-width:880px){.workspace{grid-template-columns:1fr;} body,.drop-zone,.generate-button{cursor:auto;} .cur,.cur-dot{display:none;}}
+
+  body:not(.is-authenticated) .wrap,
+  body:not(.is-authenticated) footer {
+    opacity: 0;
+    pointer-events: none;
+    user-select: none;
+  }
+  .auth-shell {
+    position: fixed;
+    inset: 0;
+    z-index: 900;
+    display: grid;
+    place-items: center;
+    padding: 22px;
+    background:
+      radial-gradient(circle at 20% 20%, rgba(0,240,255,.16), transparent 32rem),
+      radial-gradient(circle at 84% 30%, rgba(255,43,214,.14), transparent 34rem),
+      rgba(6,6,13,.92);
+    backdrop-filter: blur(16px);
+    cursor: auto;
+  }
+  .auth-shell[hidden] { display: none; }
+  .auth-card {
+    width: min(520px, 100%);
+    padding: 30px;
+    border-radius: 24px;
+    background: rgba(12,12,26,.88);
+    box-shadow: 0 0 70px rgba(0,240,255,.18);
+  }
+  .auth-brand {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 26px;
+  }
+  .auth-brand span {
+    width: 48px;
+    height: 48px;
+    display: grid;
+    place-items: center;
+    border-radius: 15px;
+    color: #06060d;
+    font-weight: 900;
+    background: linear-gradient(135deg,var(--neon),var(--neon3));
+    box-shadow: 0 0 22px rgba(0,240,255,.45);
+  }
+  .auth-brand strong,
+  .auth-brand small {
+    display: block;
+  }
+  .auth-brand small,
+  .auth-card p,
+  .phone-field span {
+    color: var(--dim);
+  }
+  .auth-card h1 {
+    margin-bottom: 10px;
+    font-size: clamp(28px, 5vw, 42px);
+  }
+  .phone-field {
+    display: grid;
+    gap: 8px;
+    margin: 18px 0 12px;
+    text-align: start;
+  }
+  .phone-field div {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    min-height: 54px;
+    padding: 0 14px;
+    border: 1px solid var(--line);
+    border-radius: 16px;
+    background: rgba(120,140,255,.06);
+  }
+  .phone-field b {
+    direction: ltr;
+    color: var(--neon);
+  }
+  .phone-field input {
+    flex: 1;
+    min-width: 0;
+    border: 0;
+    outline: 0;
+    color: var(--text);
+    background: transparent;
+    font: inherit;
+    direction: ltr;
+  }
+  .auth-primary {
+    width: 100%;
+    min-height: 54px;
+    border: 0;
+    border-radius: 40px;
+    color: #06060d;
+    font-weight: 900;
+    background: linear-gradient(120deg,var(--neon),var(--neon3),var(--neon2));
+    cursor: pointer;
+    box-shadow: 0 0 28px rgba(0,240,255,.35);
+  }
+  .auth-primary:disabled {
+    opacity: .62;
+    cursor: wait;
+  }
+  .otp-block {
+    margin-top: 12px;
+  }
+  .recaptcha-box {
+    display: grid;
+    place-items: center;
+    margin-top: 14px;
+    min-height: 78px;
+  }
+  .auth-message {
+    min-height: 24px;
+    margin-top: 12px;
+    color: var(--dim);
+    text-align: center;
+    font-size: 14px;
+  }
+  .auth-message[data-type="success"] { color: var(--neon); }
+  .auth-message[data-type="error"] { color: var(--neon2); }
 </style>
 </head>
 <body>
@@ -630,5 +752,6 @@ generateButton.addEventListener("click",e=>{
   },step);
 });
 </script>
+<script type="module" src="/src/auth.js"></script>
 </body>
 </html>
