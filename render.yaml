@@ -1,5 +1,11 @@
 services:
-  - type: static_site
+  - type: web
     name: al-mulhim-ai
+    runtime: node
     buildCommand: npm install && npm run build
-    staticPublishPath: dist
+    startCommand: npm run start
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: SESSION_SECRET
+        generateValue: true
