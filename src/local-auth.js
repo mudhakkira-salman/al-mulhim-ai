@@ -102,8 +102,9 @@ async function api(path, body) {
     credentials: "same-origin",
     body: body ? JSON.stringify(body) : undefined
   });
-  const data = await response.json().catch(() => ({}));
-  if (!response.ok) throw new Error(data.error || "تعذر تنفيذ العملية.");
+  const contentType = response.headers.get("content-type") || "";
+  const data = contentType.includes("application/json") ? await response.json().catch(() => ({})) : {};
+  if (!response.ok) throw new Error(data.error || "خدمة الحسابات غير مفعلة على هذا النشر.");
   return data;
 }
 
@@ -126,6 +127,7 @@ form.addEventListener("submit", async (event) => {
       identifier: identifierInput.value,
       password: passwordInput.value
     });
+    if (!data.user) throw new Error("خدمة الحسابات غير مفعلة على هذا النشر.");
     applyUser(data.user);
     setMessage(mode === "login" ? "تم تسجيل الدخول." : "تم إنشاء الحساب.", "success");
   } catch (error) {
