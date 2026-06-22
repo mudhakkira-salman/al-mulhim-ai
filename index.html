@@ -1,0 +1,634 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>الملهم · ULTRA</title>
+<style>
+  :root{
+    --bg:#06060d; --neon:#00f0ff; --neon2:#ff2bd6; --neon3:#b76bff; --gold:#ffd23f;
+    --text:#e9ecff; --dim:#8088b8; --glass:rgba(255,255,255,.04); --line:rgba(120,140,255,.18);
+    --mx:50%; --my:30%;
+  }
+  *{margin:0;padding:0;box-sizing:border-box;-webkit-font-smoothing:antialiased;}
+  html,body{height:100%;}
+  body{font-family:"Helvetica Neue",Arial,"Segoe UI",sans-serif;background:var(--bg);color:var(--text);
+    min-height:100vh;overflow-x:hidden;line-height:1.6;position:relative;cursor:none;}
+
+  /* مؤشر مخصص */
+  .cur{position:fixed;width:16px;height:16px;border:1.5px solid var(--neon);border-radius:50%;
+    z-index:999;pointer-events:none;transform:translate(-50%,-50%);transition:width .15s,height .15s,background .15s;
+    box-shadow:0 0 14px var(--neon);mix-blend-mode:screen;}
+  .cur.big{width:42px;height:42px;background:rgba(0,240,255,.12);}
+  .cur-dot{position:fixed;width:4px;height:4px;background:var(--neon);border-radius:50%;z-index:999;
+    pointer-events:none;transform:translate(-50%,-50%);}
+
+  #particles{position:fixed;inset:0;z-index:0;}
+  .cursor-glow{position:fixed;inset:0;z-index:1;pointer-events:none;
+    background:radial-gradient(420px circle at var(--mx) var(--my),rgba(0,240,255,.10),rgba(183,107,255,.06) 40%,transparent 70%);}
+  .grid-bg{position:fixed;inset:-2px;z-index:0;pointer-events:none;opacity:.35;
+    background-image:linear-gradient(var(--line) 1px,transparent 1px),linear-gradient(90deg,var(--line) 1px,transparent 1px);
+    background-size:46px 46px;
+    mask-image:radial-gradient(circle at 50% 30%,#000 0%,transparent 75%);
+    -webkit-mask-image:radial-gradient(circle at 50% 30%,#000 0%,transparent 75%);
+    animation:gridmove 22s linear infinite;}
+  @keyframes gridmove{to{background-position:46px 46px,46px 46px;}}
+  .aurora{position:fixed;top:-30%;left:50%;transform:translateX(-50%);width:120vw;height:60vh;z-index:0;
+    pointer-events:none;filter:blur(90px);opacity:.5;
+    background:radial-gradient(40% 60% at 30% 50%,var(--neon) 0,transparent 60%),
+      radial-gradient(40% 60% at 70% 50%,var(--neon2) 0,transparent 60%);
+    animation:aurora 14s ease-in-out infinite alternate,hue 30s linear infinite;}
+  @keyframes aurora{from{transform:translateX(-55%) scaleX(1);}to{transform:translateX(-45%) scaleX(1.25);}}
+  @keyframes hue{to{filter:blur(90px) hue-rotate(360deg);}}
+
+  /* INTRO */
+  .intro{position:fixed;inset:0;z-index:500;background:var(--bg);display:grid;place-items:center;
+    transition:opacity .8s,visibility .8s;}
+  .intro.hide{opacity:0;visibility:hidden;}
+  #introCanvas{position:absolute;inset:0;}
+  .intro-skip{position:absolute;bottom:30px;left:50%;transform:translateX(-50%);color:var(--dim);
+    font-size:12px;letter-spacing:2px;border:1px solid var(--line);background:transparent;padding:8px 18px;
+    border-radius:30px;cursor:pointer;z-index:2;}
+
+  .wrap{position:relative;z-index:3;}
+  header.topbar{display:flex;align-items:center;justify-content:space-between;max-width:1180px;margin:0 auto;padding:24px;}
+  .brand{display:flex;align-items:center;gap:12px;font-weight:800;font-size:21px;letter-spacing:.5px;}
+  .brand .mark{width:38px;height:38px;border-radius:12px;display:grid;place-items:center;font-size:18px;
+    background:linear-gradient(135deg,var(--neon),var(--neon3));color:#06060d;box-shadow:0 0 22px rgba(0,240,255,.6);animation:pulse 3s ease-in-out infinite;}
+  @keyframes pulse{50%{box-shadow:0 0 36px rgba(255,43,214,.7);}}
+  .top-actions{display:flex;align-items:center;gap:10px;}
+  .icon-btn{cursor:pointer;border:1px solid var(--line);background:var(--glass);color:var(--text);
+    width:42px;height:42px;border-radius:50%;font-size:16px;display:grid;place-items:center;transition:border-color .2s,box-shadow .2s;}
+  .icon-btn:hover{border-color:var(--neon);box-shadow:0 0 16px rgba(0,240,255,.35);}
+  .menu-btn{position:relative;}
+  .menu-btn>button{cursor:pointer;border:1px solid var(--line);background:var(--glass);color:var(--text);
+    padding:10px 20px;border-radius:30px;font-size:14px;font-weight:600;backdrop-filter:blur(8px);transition:border-color .2s,box-shadow .2s;}
+  .menu-btn>button:hover{border-color:var(--neon);box-shadow:0 0 18px rgba(0,240,255,.35);}
+  .menu{position:absolute;top:120%;left:0;min-width:190px;padding:8px;display:none;flex-direction:column;gap:4px;z-index:20;}
+  .menu.is-open{display:flex;}
+  .menu button{background:transparent;color:var(--text);text-align:start;padding:12px 14px;border-radius:12px;font-size:14px;cursor:pointer;border:none;width:100%;}
+  .menu button:hover{background:rgba(120,140,255,.12);}
+  .glass{background:var(--glass);backdrop-filter:blur(16px);-webkit-backdrop-filter:blur(16px);border:1px solid var(--line);border-radius:24px;}
+
+  .hero{max-width:1180px;margin:0 auto;padding:50px 24px 14px;text-align:center;position:relative;}
+  .badge{display:inline-flex;align-items:center;gap:8px;font-size:12px;letter-spacing:2px;padding:8px 18px;border-radius:30px;
+    margin-bottom:22px;color:var(--neon);border:1px solid var(--neon);background:rgba(0,240,255,.06);box-shadow:0 0 18px rgba(0,240,255,.25) inset;}
+  .badge .dot{width:7px;height:7px;border-radius:50%;background:var(--neon);box-shadow:0 0 10px var(--neon);animation:blink 1.4s infinite;}
+  @keyframes blink{50%{opacity:.2;}}
+  .hero h1{font-size:clamp(36px,7vw,72px);font-weight:800;letter-spacing:-1.5px;line-height:1.05;}
+  .hero h1 .grad{background:linear-gradient(120deg,var(--neon),var(--neon3),var(--neon2));-webkit-background-clip:text;background-clip:text;
+    color:transparent;filter:drop-shadow(0 0 22px rgba(120,140,255,.45));}
+  .glitch{position:relative;}
+  .hero p{color:var(--dim);font-size:clamp(15px,2.3vw,19px);max-width:560px;margin:20px auto 0;}
+
+  .workspace{max-width:1180px;margin:42px auto 0;padding:0 24px;display:grid;grid-template-columns:repeat(3,1fr);gap:20px;}
+  .card{padding:24px;position:relative;overflow:hidden;transition:transform .12s ease-out,box-shadow .3s,border-color .3s;
+    transform-style:preserve-3d;}
+  .card::before{content:"";position:absolute;inset:0;border-radius:24px;padding:1px;
+    background:linear-gradient(135deg,transparent,var(--neon),transparent 60%);
+    -webkit-mask:linear-gradient(#000 0 0) content-box,linear-gradient(#000 0 0);-webkit-mask-composite:xor;mask-composite:exclude;
+    opacity:0;transition:opacity .3s;}
+  .card:hover{box-shadow:0 22px 50px rgba(0,0,0,.5);border-color:transparent;}
+  .card:hover::before{opacity:1;}
+  .card-head{display:flex;align-items:center;gap:12px;margin-bottom:20px;}
+  .card-head span{width:36px;height:36px;border-radius:11px;display:grid;place-items:center;font-weight:800;font-size:14px;color:#06060d;}
+  .card:nth-child(1) .card-head span{background:var(--neon);box-shadow:0 0 16px rgba(0,240,255,.55);}
+  .card:nth-child(2) .card-head span{background:var(--neon2);box-shadow:0 0 16px rgba(255,43,214,.55);}
+  .card:nth-child(3) .card-head span{background:var(--neon3);box-shadow:0 0 16px rgba(183,107,255,.55);}
+  .card-head h2{font-size:17px;font-weight:800;}
+
+  .drop-zone{position:relative;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:10px;
+    min-height:240px;border:1.5px dashed var(--line);border-radius:18px;cursor:none;text-align:center;padding:18px;overflow:hidden;
+    transition:border-color .25s,background .25s,box-shadow .25s;}
+  .drop-zone:hover{border-color:var(--neon);background:rgba(0,240,255,.04);box-shadow:0 0 24px rgba(0,240,255,.18) inset;}
+  .drop-zone input[type=file]{position:absolute;inset:0;opacity:0;cursor:pointer;}
+  .upload-icon{width:54px;height:54px;border-radius:50%;display:grid;place-items:center;font-size:26px;font-weight:300;color:#06060d;
+    background:linear-gradient(135deg,var(--neon),var(--neon3));box-shadow:0 0 22px rgba(0,240,255,.5);animation:bob 4s ease-in-out infinite;}
+  @keyframes bob{50%{transform:translateY(-8px);}}
+  .drop-zone strong{font-size:15px;} .drop-zone small{font-size:12px;color:var(--dim);}
+  .drop-zone.has-image{border-style:solid;padding:0;border-color:var(--neon);}
+  .drop-zone.has-image img{width:100%;height:240px;object-fit:cover;border-radius:16px;display:block;}
+  .change-label{position:absolute;bottom:10px;inset-inline:10px;background:rgba(6,6,13,.8);color:var(--neon);font-size:12px;
+    padding:8px;border-radius:12px;text-align:center;border:1px solid var(--line);}
+
+  .result-stage{min-height:240px;border-radius:18px;overflow:hidden;display:flex;position:relative;}
+  .result-empty,.loading-result{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:12px;
+    text-align:center;color:var(--dim);background:rgba(120,140,255,.04);border-radius:16px;border:1px dashed var(--line);}
+  .result-empty i{width:48px;height:48px;border-radius:14px;display:block;background:linear-gradient(135deg,var(--neon3),var(--neon2));opacity:.55;animation:bob 5s ease-in-out infinite;}
+  .result-empty strong,.loading-result strong{color:var(--text);font-size:15px;}
+  /* مرحلة التوليد: canvas + scan + progress */
+  .gen-stage{flex:1;position:relative;border-radius:16px;overflow:hidden;background:#04040a;}
+  .gen-stage canvas{width:100%;height:240px;display:block;object-fit:cover;}
+  .scan{position:absolute;left:0;right:0;height:3px;background:linear-gradient(90deg,transparent,var(--neon),transparent);
+    box-shadow:0 0 18px var(--neon);animation:scan 1.3s ease-in-out infinite;}
+  @keyframes scan{0%{top:0;}100%{top:100%;}}
+  .gen-info{position:absolute;inset:auto 0 0 0;padding:14px 16px;background:linear-gradient(transparent,rgba(4,4,10,.95));}
+  .gen-info .stage-txt{font-size:13px;color:var(--neon);margin-bottom:8px;letter-spacing:.5px;}
+  .bar{height:5px;border-radius:6px;background:rgba(120,140,255,.15);overflow:hidden;}
+  .bar > i{display:block;height:100%;width:0;border-radius:6px;background:linear-gradient(90deg,var(--neon),var(--neon3),var(--neon2));box-shadow:0 0 12px var(--neon);transition:width .25s;}
+  .gen-info .pct{font-size:11px;color:var(--dim);margin-top:6px;text-align:end;}
+  .mock-result{position:relative;flex:1;}
+  .mock-result canvas,.mock-result img{width:100%;height:240px;object-fit:cover;border-radius:16px;display:block;}
+  .result-overlay{position:absolute;inset:auto 0 0 0;background:linear-gradient(transparent,rgba(6,6,13,.92));color:#fff;padding:18px;display:flex;flex-direction:column;gap:4px;}
+  .result-overlay small{color:var(--dim);font-size:12px;}
+  .result-overlay a{margin-top:10px;align-self:flex-start;text-decoration:none;font-weight:700;font-size:13px;padding:10px 18px;border-radius:24px;color:#06060d;
+    background:linear-gradient(135deg,var(--neon),var(--neon3));box-shadow:0 0 18px rgba(0,240,255,.4);cursor:none;}
+  .soft-alert{flex:1;display:grid;place-items:center;text-align:center;color:var(--neon2);background:rgba(255,43,214,.08);
+    border:1px solid rgba(255,43,214,.3);border-radius:16px;padding:18px;font-weight:600;}
+
+  .actions{max-width:1180px;margin:26px auto 0;padding:24px 28px;display:flex;align-items:center;justify-content:space-between;gap:18px;flex-wrap:wrap;}
+  .actions strong{display:block;font-size:16px;} .actions span{font-size:13px;color:var(--dim);}
+  .generate-button{position:relative;cursor:none;border:none;color:#06060d;font-size:16px;font-weight:800;padding:16px 38px;border-radius:40px;
+    overflow:hidden;letter-spacing:.5px;background:linear-gradient(120deg,var(--neon),var(--neon3),var(--neon2));background-size:200% 100%;
+    box-shadow:0 0 30px rgba(0,240,255,.45);transition:transform .12s,box-shadow .2s;animation:flow 4s linear infinite;}
+  @keyframes flow{to{background-position:200% 0;}}
+  .generate-button:hover:not(:disabled){transform:translateY(-3px);box-shadow:0 0 46px rgba(255,43,214,.6);}
+  .generate-button:active:not(:disabled){transform:scale(.96);}
+  .generate-button:disabled{opacity:.55;cursor:default;animation:none;}
+  .shock{position:fixed;border:2px solid var(--neon);border-radius:50%;pointer-events:none;z-index:400;
+    transform:translate(-50%,-50%);animation:shock .6s ease-out forwards;}
+  @keyframes shock{from{width:0;height:0;opacity:.9;}to{width:340px;height:340px;opacity:0;}}
+
+  .account-modal{position:fixed;inset:0;z-index:60;display:none;place-items:center;background:rgba(3,3,8,.75);backdrop-filter:blur(8px);padding:20px;}
+  .account-modal.is-open{display:grid;}
+  .account-panel{position:relative;width:100%;max-width:460px;padding:34px;text-align:center;background:rgba(12,12,26,.85);box-shadow:0 0 60px rgba(0,240,255,.2);}
+  .close-button{position:absolute;top:16px;left:16px;width:38px;height:38px;border-radius:50%;border:1px solid var(--line);background:transparent;color:var(--text);font-size:20px;cursor:none;}
+  .close-button:hover{border-color:var(--neon2);color:var(--neon2);}
+  .account-panel h2{font-size:23px;font-weight:800;margin:14px 0 24px;}
+  .account-grid{display:flex;flex-direction:column;gap:12px;margin-bottom:26px;}
+  .account-grid>div{display:flex;justify-content:space-between;align-items:center;background:rgba(120,140,255,.06);border:1px solid var(--line);padding:15px 18px;border-radius:16px;}
+  .account-grid span{font-size:14px;color:var(--dim);} .account-grid strong{font-size:16px;color:var(--neon);}
+  .buy-button{display:inline-block;text-decoration:none;font-weight:800;padding:15px 32px;border-radius:40px;color:#06060d;background:linear-gradient(135deg,var(--gold),#ff9d2b);box-shadow:0 0 26px rgba(255,210,63,.4);cursor:none;}
+
+  /* سحب وإفلات */
+  .drop-zone.dragover{border-color:var(--neon2)!important;background:rgba(255,43,214,.08)!important;
+    box-shadow:0 0 30px rgba(255,43,214,.3) inset!important;transform:scale(1.02);}
+
+  /* معرض النتائج */
+  .gallery-wrap{max-width:1180px;margin:26px auto 0;padding:0 24px;}
+  .gallery-wrap h3{font-size:14px;color:var(--dim);letter-spacing:1px;margin-bottom:12px;display:flex;align-items:center;gap:8px;}
+  .gallery-wrap h3::before{content:"";width:6px;height:6px;border-radius:50%;background:var(--neon);box-shadow:0 0 8px var(--neon);}
+  .gallery{display:flex;gap:12px;overflow-x:auto;padding-bottom:10px;}
+  .gallery::-webkit-scrollbar{height:6px;} .gallery::-webkit-scrollbar-thumb{background:var(--line);border-radius:6px;}
+  .gallery .thumb{flex:0 0 auto;width:120px;height:120px;border-radius:14px;overflow:hidden;position:relative;
+    border:1px solid var(--line);cursor:none;transition:transform .2s,box-shadow .2s;animation:pop .5s;}
+  .gallery .thumb:hover{transform:translateY(-4px);box-shadow:0 0 20px rgba(0,240,255,.4);border-color:var(--neon);}
+  .gallery .thumb img{width:100%;height:100%;object-fit:cover;display:block;}
+  .gallery .thumb .tnum{position:absolute;top:6px;right:6px;background:rgba(6,6,13,.8);color:var(--neon);font-size:10px;padding:2px 7px;border-radius:10px;border:1px solid var(--line);}
+  @keyframes pop{from{opacity:0;transform:scale(.85);}to{opacity:1;transform:scale(1);}}
+
+  /* قبل / بعد سلايدر */
+  .ba{position:relative;flex:1;border-radius:16px;overflow:hidden;height:240px;}
+  .ba img{position:absolute;inset:0;width:100%;height:240px;object-fit:cover;}
+  .ba .after{clip-path:inset(0 0 0 var(--split,50%));}
+  .ba .handle{position:absolute;top:0;bottom:0;left:var(--split,50%);width:2px;background:var(--neon);box-shadow:0 0 12px var(--neon);cursor:ew-resize;z-index:3;}
+  .ba .handle::after{content:"⇆";position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);width:30px;height:30px;
+    background:var(--neon);color:#06060d;border-radius:50%;display:grid;place-items:center;font-size:13px;box-shadow:0 0 16px var(--neon);}
+  .ba .lbl{position:absolute;top:10px;font-size:10px;padding:3px 9px;border-radius:10px;background:rgba(6,6,13,.75);color:var(--text);z-index:2;}
+  .ba .lbl.l{right:10px;} .ba .lbl.r{left:10px;}
+
+  /* toast */
+  .toast{position:fixed;bottom:26px;left:50%;transform:translateX(-50%) translateY(120%);z-index:700;
+    background:rgba(12,12,26,.95);border:1px solid var(--neon);color:var(--text);padding:12px 22px;border-radius:30px;
+    font-size:13px;box-shadow:0 0 24px rgba(0,240,255,.3);transition:transform .35s;}
+  .toast.show{transform:translateX(-50%) translateY(0);}
+
+  /* لوحة الأدمن */
+  .admin-grid{display:flex;flex-direction:column;gap:10px;margin:18px 0;max-height:240px;overflow-y:auto;text-align:start;}
+  .admin-grid::-webkit-scrollbar{width:6px;} .admin-grid::-webkit-scrollbar-thumb{background:var(--line);border-radius:6px;}
+  .urow{display:flex;align-items:center;gap:10px;background:rgba(120,140,255,.06);border:1px solid var(--line);padding:12px 14px;border-radius:14px;}
+  .urow .uname{flex:1;font-weight:700;font-size:14px;}
+  .urow .uatt{font-size:13px;color:var(--neon);min-width:60px;text-align:center;}
+  .urow .ubtn{cursor:none;border:1px solid var(--line);background:transparent;color:var(--text);width:30px;height:30px;border-radius:9px;font-size:15px;display:grid;place-items:center;}
+  .urow .ubtn:hover{border-color:var(--neon);color:var(--neon);}
+  .admin-add{display:flex;gap:8px;margin-bottom:6px;}
+  .admin-add input{flex:1;background:rgba(120,140,255,.06);border:1px solid var(--line);border-radius:12px;color:var(--text);padding:11px 14px;font-size:14px;font-family:inherit;}
+  .admin-add input:focus{outline:none;border-color:var(--neon);}
+  .admin-add input.num{flex:0 0 90px;text-align:center;}
+  .admin-add button{cursor:none;border:none;border-radius:12px;padding:0 18px;font-weight:700;color:#06060d;background:linear-gradient(135deg,var(--neon),var(--neon3));}
+  .admin-empty{color:var(--dim);font-size:13px;text-align:center;padding:20px;}
+
+  footer{text-align:center;color:var(--dim);font-size:13px;padding:70px 20px 44px;}
+  footer .pulse-line{width:60px;height:2px;margin:0 auto 16px;border-radius:2px;background:linear-gradient(90deg,transparent,var(--neon),transparent);animation:blink 2s infinite;}
+
+  /* الوضع الفاتح */
+  body.light{--bg:#eef1ff;--text:#0c1030;--dim:#5a6190;--glass:rgba(10,15,50,.05);--line:rgba(40,60,160,.18);}
+  body.light .aurora{opacity:.35;}
+
+  @media(max-width:880px){.workspace{grid-template-columns:1fr;} body,.drop-zone,.generate-button{cursor:auto;} .cur,.cur-dot{display:none;}}
+</style>
+</head>
+<body>
+  <div class="cur" id="cur"></div>
+  <div class="cur-dot" id="curDot"></div>
+
+  <div class="intro" id="intro">
+    <canvas id="introCanvas"></canvas>
+    <button class="intro-skip" id="skipIntro">تخطّي ›</button>
+  </div>
+
+  <canvas id="particles"></canvas>
+  <div class="aurora"></div>
+  <div class="grid-bg"></div>
+  <div class="cursor-glow"></div>
+  <div class="wrap" id="app"></div>
+
+<script>
+/* ============ مؤشر مخصص ============ */
+const cur=document.getElementById("cur"), curDot=document.getElementById("curDot");
+let cx=innerWidth/2, cy=innerHeight/2, dx=cx, dy=cy;
+addEventListener("pointermove",e=>{
+  cx=e.clientX; cy=e.clientY;
+  curDot.style.left=cx+"px"; curDot.style.top=cy+"px";
+  document.documentElement.style.setProperty("--mx",cx+"px");
+  document.documentElement.style.setProperty("--my",cy+"px");
+});
+(function curLoop(){ dx+=(cx-dx)*.18; dy+=(cy-dy)*.18; cur.style.left=dx+"px"; cur.style.top=dy+"px"; requestAnimationFrame(curLoop); })();
+document.addEventListener("mouseover",e=>{
+  if(e.target.closest("button,a,label,.card")) cur.classList.add("big"); else cur.classList.remove("big");
+});
+
+/* ============ صوت (Web Audio) ============ */
+let AC=null, soundOn=true;
+function ac(){ if(!AC) AC=new (window.AudioContext||window.webkitAudioContext)(); return AC; }
+function beep(freq=440,dur=.12,type="sine",vol=.08){
+  if(!soundOn) return;
+  try{ const c=ac(),o=c.createOscillator(),g=c.createGain();
+    o.type=type; o.frequency.value=freq; o.connect(g); g.connect(c.destination);
+    g.gain.setValueAtTime(vol,c.currentTime); g.gain.exponentialRampToValueAtTime(.0001,c.currentTime+dur);
+    o.start(); o.stop(c.currentTime+dur);
+  }catch(e){}
+}
+function chord(){ [523,659,784,1047].forEach((f,i)=>setTimeout(()=>beep(f,.25,"triangle",.07),i*70)); }
+
+/* ============ INTRO: شعار يتجمّع من جزيئات ثم ينفجر ============ */
+const iC=document.getElementById("introCanvas"), iCtx=iC.getContext("2d");
+const intro=document.getElementById("intro");
+let iW,iH,targets=[],iParts=[],introStart=performance.now(),exploded=false,introDone=false;
+function iResize(){ iW=iC.width=innerWidth; iH=iC.height=innerHeight; buildTargets(); }
+function buildTargets(){
+  const off=document.createElement("canvas"); off.width=iW; off.height=iH;
+  const o=off.getContext("2d");
+  o.fillStyle="#fff"; o.textAlign="center"; o.textBaseline="middle";
+  const fs=Math.min(iW*0.18,180);
+  o.font="800 "+fs+"px 'Helvetica Neue',Arial";
+  o.fillText("الملهم", iW/2, iH/2);
+  const data=o.getImageData(0,0,iW,iH).data;
+  targets=[]; const gap=Math.max(5,Math.floor(fs/26));
+  for(let y=0;y<iH;y+=gap){ for(let x=0;x<iW;x+=gap){
+    if(data[(y*iW+x)*4+3]>128) targets.push({x,y});
+  }}
+  iParts=targets.map(t=>({tx:t.x,ty:t.y,x:Math.random()*iW,y:Math.random()*iH,
+    vx:0,vy:0,c:["#00f0ff","#ff2bd6","#b76bff"][(Math.random()*3)|0]}));
+}
+iResize(); addEventListener("resize",iResize);
+function introLoop(now){
+  if(introDone) return;
+  iCtx.clearRect(0,0,iW,iH);
+  const t=now-introStart;
+  if(t>2600 && !exploded){ exploded=true; iParts.forEach(p=>{ const a=Math.random()*7; const s=6+Math.random()*8; p.vx=Math.cos(a)*s; p.vy=Math.sin(a)*s; }); setTimeout(endIntro,900); }
+  for(const p of iParts){
+    if(!exploded){ p.x+=(p.tx-p.x)*.08; p.y+=(p.ty-p.y)*.08; }
+    else { p.x+=p.vx; p.y+=p.vy; p.vy+=.15; }
+    iCtx.beginPath(); iCtx.arc(p.x,p.y,1.6,0,7);
+    iCtx.fillStyle=p.c; iCtx.shadowColor=p.c; iCtx.shadowBlur=7; iCtx.fill();
+  }
+  iCtx.shadowBlur=0;
+  requestAnimationFrame(introLoop);
+}
+requestAnimationFrame(introLoop);
+function endIntro(){ if(introDone) return; introDone=true; intro.classList.add("hide"); chord(); }
+document.getElementById("skipIntro").addEventListener("click",endIntro);
+
+/* ============ جزيئات الخلفية + تفاعل فيزيائي مع الماوس ============ */
+const canvas=document.getElementById("particles"), ctx=canvas.getContext("2d");
+let W,H,parts=[]; const COLORS=["#00f0ff","#ff2bd6","#b76bff"];
+function resize(){ W=canvas.width=innerWidth; H=canvas.height=innerHeight; }
+function makeParts(){ parts=[]; const n=Math.min(90,Math.floor(W*H/16000));
+  for(let i=0;i<n;i++) parts.push({x:Math.random()*W,y:Math.random()*H,vx:(Math.random()-.5)*.4,vy:(Math.random()-.5)*.4,r:Math.random()*1.8+.6,c:COLORS[(Math.random()*3)|0]});
+}
+resize(); makeParts(); addEventListener("resize",()=>{resize();makeParts();});
+function tick(){
+  ctx.clearRect(0,0,W,H);
+  for(let i=0;i<parts.length;i++){
+    const p=parts[i];
+    const ddx=p.x-cx, ddy=p.y-cy, dist=Math.hypot(ddx,ddy);
+    if(dist<140){ const f=(140-dist)/140*1.2; p.vx+=ddx/dist*f*.4; p.vy+=ddy/dist*f*.4; }
+    p.vx*=.97; p.vy*=.97; p.x+=p.vx; p.y+=p.vy;
+    if(p.x<0||p.x>W)p.vx*=-1; if(p.y<0||p.y>H)p.vy*=-1;
+    ctx.beginPath(); ctx.arc(p.x,p.y,p.r,0,7);
+    ctx.fillStyle=p.c; ctx.globalAlpha=.8; ctx.shadowColor=p.c; ctx.shadowBlur=8; ctx.fill();
+    for(let j=i+1;j<parts.length;j++){ const q=parts[j],a=p.x-q.x,b=p.y-q.y,d=Math.hypot(a,b);
+      if(d<120){ ctx.globalAlpha=(1-d/120)*.18; ctx.shadowBlur=0; ctx.strokeStyle=p.c; ctx.lineWidth=.6;
+        ctx.beginPath(); ctx.moveTo(p.x,p.y); ctx.lineTo(q.x,q.y); ctx.stroke(); } }
+  }
+  ctx.globalAlpha=1; ctx.shadowBlur=0; requestAnimationFrame(tick);
+}
+tick();
+
+/* ============ المنطق ============ */
+/* ==== إعداد التوليد الحقيقي ====
+   لتفعيل التوليد الفعلي: حط رابط الـ backend الخاص فيك هنا.
+   لا تضع مفتاح API مباشرة في هذا الملف — اجعل التوليد يمر عبر سيرفرك (Flask/Render).
+   إن بقي فارغاً، يعمل المزج التجريبي تلقائياً. */
+const GENERATE_ENDPOINT = ""; // مثال: "https://your-app.onrender.com/generate"
+
+/* استرجاع الحالة المحفوظة */
+let saved={};
+try{ saved=JSON.parse(localStorage.getItem("mulhim_state")||"{}"); }catch(e){}
+const state={
+  attempts: saved.attempts ?? 100,   // عدد محاولات التوليد المتبقية
+  used: saved.used ?? 0,             // عدد التوليدات المنفّذة
+  source:null, reference:null, isGenerating:false
+};
+let gallery = [];
+try{ gallery=JSON.parse(localStorage.getItem("mulhim_gallery")||"[]"); }catch(e){}
+function persist(){
+  try{
+    localStorage.setItem("mulhim_state",JSON.stringify({attempts:state.attempts,used:state.used}));
+    localStorage.setItem("mulhim_gallery",JSON.stringify(gallery.slice(-12)));
+  }catch(e){}
+}
+const whatsappUrl="https://wa.me/966554325828?text="+encodeURIComponent("أرغب بزيادة عدد محاولات التوليد في منصة الملهم");
+
+document.querySelector("#app").innerHTML=`
+  <header class="topbar">
+    <div class="brand"><span class="mark">✦</span> الملهم</div>
+    <div class="top-actions">
+      <button class="icon-btn" id="adminBtn" title="لوحة الأدمن">⚙</button>
+      <button class="icon-btn" id="soundBtn" title="الصوت">♪</button>
+      <button class="icon-btn" id="themeBtn" title="الوضع">☾</button>
+      <div class="menu-btn">
+        <button id="menuButton">القائمة ▾</button>
+        <div class="menu glass" id="menu">
+          <button id="accountButton">حسابي</button>
+          <button id="logoutButton">تسجيل الخروج</button>
+        </div>
+      </div>
+    </div>
+  </header>
+  <main>
+    <section class="hero">
+      <span class="badge"><span class="dot"></span> AI ENGINE · 2040</span>
+      <h1>تخيّل. <span class="grad glitch" id="glitch" data-text="أنشئ.">أنشئ.</span> أبهِر.</h1>
+      <p>محرك تصوّر معماري قادم من المستقبل — يحوّل صورة مشروعك إلى رؤية جديدة مستوحاة من أي مرجع تختاره.</p>
+    </section>
+    <section class="workspace">
+      <article class="card glass tilt">
+        <div class="card-head"><span>01</span><h2>صورة المشروع</h2></div>
+        <label class="drop-zone" for="sourceInput" id="sourceZone">
+          <input id="sourceInput" type="file" accept="image/*" />
+          <span class="upload-icon">+</span><strong>ارفع الصورة الأصلية</strong><small>PNG / JPG / WEBP</small>
+        </label>
+      </article>
+      <article class="card glass tilt">
+        <div class="card-head"><span>02</span><h2>الصورة المرجعية</h2></div>
+        <label class="drop-zone" for="referenceInput" id="referenceZone">
+          <input id="referenceInput" type="file" accept="image/*" />
+          <span class="upload-icon">+</span><strong>ارفع صورة الإلهام</strong><small>خامات، طابع، إضاءة، تفاصيل</small>
+        </label>
+      </article>
+      <article class="card glass tilt">
+        <div class="card-head"><span>03</span><h2>النتيجة</h2></div>
+        <div class="result-stage" id="resultStage">
+          <div class="result-empty"><i></i><strong>ستظهر النتيجة هنا</strong><small>لا يوجد حفظ تلقائي للنتيجة</small></div>
+        </div>
+      </article>
+    </section>
+    <section class="actions glass">
+      <div><strong>كل توليد = محاولة واحدة</strong><span>المحاولات المتبقية: <b id="attBar">${state.attempts}</b></span></div>
+      <button class="generate-button" id="generateButton">توليد الآن</button>
+    </section>
+    <section class="gallery-wrap" id="galleryWrap" style="display:none">
+      <h3>معرض التوليدات</h3>
+      <div class="gallery" id="gallery"></div>
+    </section>
+    <div class="account-modal" id="accountModal" aria-hidden="true">
+      <div class="account-panel glass">
+        <button class="close-button" id="closeAccount" aria-label="إغلاق">×</button>
+        <span class="badge"><span class="dot"></span> حسابي</span>
+        <h2>ملخص الحساب</h2>
+        <div class="account-grid">
+          <div><span>المحاولات المتبقية</span><strong id="attVal">${state.attempts}</strong></div>
+          <div><span>عدد التوليدات المنفّذة</span><strong id="usedVal">${state.used}</strong></div>
+        </div>
+        <a class="buy-button" href="${whatsappUrl}" target="_blank" rel="noreferrer">طلب زيادة المحاولات عبر واتساب</a>
+      </div>
+    </div>
+    <div class="account-modal" id="adminModal" aria-hidden="true">
+      <div class="account-panel glass" style="max-width:520px">
+        <button class="close-button" id="closeAdmin" aria-label="إغلاق">×</button>
+        <span class="badge"><span class="dot"></span> لوحة الأدمن</span>
+        <h2>إدارة المستخدمين</h2>
+        <div class="admin-add">
+          <input id="newUserName" type="text" placeholder="اسم المستخدم" />
+          <input id="newUserAtt" class="num" type="number" min="1" value="100" />
+          <button id="addUserBtn">إضافة</button>
+        </div>
+        <div class="admin-grid" id="adminGrid"></div>
+      </div>
+    </div>
+  </main>
+  <footer><div class="pulse-line"></div>منصة الملهم · محرك المستقبل · صفحة واحدة</footer>
+`;
+
+const toastEl=document.createElement("div"); toastEl.className="toast"; document.body.appendChild(toastEl);
+let toastTimer;
+function toast(msg){ toastEl.textContent=msg; toastEl.classList.add("show"); clearTimeout(toastTimer); toastTimer=setTimeout(()=>toastEl.classList.remove("show"),2600); }
+
+const menu=document.querySelector("#menu"), accountModal=document.querySelector("#accountModal");
+const resultStage=document.querySelector("#resultStage"), generateButton=document.querySelector("#generateButton");
+
+/* صوت + وضع */
+document.querySelector("#soundBtn").addEventListener("click",e=>{ soundOn=!soundOn; e.target.textContent=soundOn?"♪":"✕"; e.target.style.opacity=soundOn?1:.5; if(soundOn)beep(660,.1,"sine"); });
+document.querySelector("#themeBtn").addEventListener("click",e=>{ document.body.classList.toggle("light"); const l=document.body.classList.contains("light"); e.target.textContent=l?"☀":"☾"; beep(l?880:330,.1,"sine"); });
+
+document.querySelector("#menuButton").addEventListener("click",()=>{menu.classList.toggle("is-open");beep(520,.06);});
+document.querySelector("#accountButton").addEventListener("click",()=>{menu.classList.remove("is-open");accountModal.classList.add("is-open");accountModal.setAttribute("aria-hidden","false");syncAccount();beep(700,.08);});
+document.querySelector("#closeAccount").addEventListener("click",closeAccount);
+accountModal.addEventListener("click",e=>{if(e.target===accountModal)closeAccount();});
+document.querySelector("#logoutButton").addEventListener("click",()=>{menu.classList.remove("is-open");alert("تم تسجيل الخروج من النموذج التجريبي.");});
+function closeAccount(){accountModal.classList.remove("is-open");accountModal.setAttribute("aria-hidden","true");}
+function syncAccount(){
+  document.querySelector("#attVal").textContent=state.attempts;
+  document.querySelector("#usedVal").textContent=state.used;
+  const ab=document.querySelector("#attBar"); if(ab) ab.textContent=state.attempts;
+}
+
+/* عرض المعرض */
+const galleryWrap=document.querySelector("#galleryWrap"), galleryEl=document.querySelector("#gallery");
+function renderGallery(){
+  if(!gallery.length){ galleryWrap.style.display="none"; return; }
+  galleryWrap.style.display="block";
+  galleryEl.innerHTML=gallery.map((g,i)=>`<div class="thumb" data-i="${i}"><span class="tnum">#${i+1}</span><img src="${g}" alt="" /></div>`).join("");
+  galleryEl.querySelectorAll(".thumb").forEach(t=>t.addEventListener("click",()=>{
+    const img=gallery[+t.dataset.i];
+    resultStage.innerHTML=`<div class="mock-result"><img src="${img}" alt="" />
+      <div class="result-overlay"><strong>من المعرض · #${(+t.dataset.i)+1}</strong><small>توليد سابق محفوظ.</small>
+      <a download="al-mulhim-${(+t.dataset.i)+1}.png" href="${img}">تحميل النتيجة</a></div></div>`;
+    beep(700,.08); resultStage.scrollIntoView({behavior:"smooth",block:"center"});
+  }));
+}
+renderGallery();
+
+/* ===== لوحة الأدمن: مستخدمون محليون ===== */
+let users=[];
+try{ users=JSON.parse(localStorage.getItem("mulhim_users")||"[]"); }catch(e){}
+function persistUsers(){ try{ localStorage.setItem("mulhim_users",JSON.stringify(users)); }catch(e){} }
+const adminModal=document.querySelector("#adminModal");
+const adminGrid=document.querySelector("#adminGrid");
+function renderAdmin(){
+  if(!users.length){ adminGrid.innerHTML=`<div class="admin-empty">لا يوجد مستخدمون بعد — أضف مستخدماً بالأعلى.</div>`; return; }
+  adminGrid.innerHTML=users.map((u,i)=>`
+    <div class="urow">
+      <span class="uname">${u.name}</span>
+      <span class="uatt">${u.attempts} محاولة</span>
+      <button class="ubtn" data-act="plus" data-i="${i}" title="+10">＋</button>
+      <button class="ubtn" data-act="minus" data-i="${i}" title="-10">－</button>
+      <button class="ubtn" data-act="del" data-i="${i}" title="حذف">🗑</button>
+    </div>`).join("");
+  adminGrid.querySelectorAll(".ubtn").forEach(b=>b.addEventListener("click",()=>{
+    const i=+b.dataset.i, act=b.dataset.act;
+    if(act==="plus"){ users[i].attempts+=10; beep(740,.07); }
+    if(act==="minus"){ users[i].attempts=Math.max(0,users[i].attempts-10); beep(420,.07); }
+    if(act==="del"){ users.splice(i,1); beep(300,.1); }
+    persistUsers(); renderAdmin(); toast("تم التحديث");
+  }));
+}
+renderAdmin();
+document.querySelector("#adminBtn").addEventListener("click",()=>{ adminModal.classList.add("is-open"); adminModal.setAttribute("aria-hidden","false"); renderAdmin(); beep(700,.08); });
+document.querySelector("#closeAdmin").addEventListener("click",()=>{ adminModal.classList.remove("is-open"); adminModal.setAttribute("aria-hidden","true"); });
+adminModal.addEventListener("click",e=>{ if(e.target===adminModal){ adminModal.classList.remove("is-open"); adminModal.setAttribute("aria-hidden","true"); } });
+document.querySelector("#addUserBtn").addEventListener("click",()=>{
+  const name=document.querySelector("#newUserName").value.trim();
+  const att=parseInt(document.querySelector("#newUserAtt").value)||0;
+  if(!name){ toast("اكتب اسم المستخدم"); return; }
+  users.push({name,attempts:att}); persistUsers(); renderAdmin();
+  document.querySelector("#newUserName").value=""; beep(660,.1,"triangle"); toast("تمت إضافة "+name);
+});
+
+/* التوليد الحقيقي عبر backend (إن وُجد) — وإلا المزج التجريبي */
+async function realGenerate(srcUrl,refUrl){
+  if(!GENERATE_ENDPOINT) return null;
+  try{
+    const toB64=async u=>{const r=await fetch(u);const b=await r.blob();return await new Promise(res=>{const fr=new FileReader();fr.onload=()=>res(fr.result);fr.readAsDataURL(b);});};
+    const [src,ref]=await Promise.all([toB64(srcUrl),toB64(refUrl)]);
+    const res=await fetch(GENERATE_ENDPOINT,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({source:src,reference:ref})});
+    if(!res.ok) throw new Error("HTTP "+res.status);
+    const data=await res.json();
+    return data.image || data.url || null; // يتوقع {image:"data:..."} أو {url:"https://..."}
+  }catch(e){ toast("تعذّر الاتصال بمحرك التوليد — عرض تجريبي"); return null; }
+}
+
+/* tilt 3D للبطاقات */
+document.querySelectorAll(".tilt").forEach(card=>{
+  card.addEventListener("pointermove",e=>{
+    const r=card.getBoundingClientRect();
+    const px=(e.clientX-r.left)/r.width-.5, py=(e.clientY-r.top)/r.height-.5;
+    card.style.transform=`perspective(800px) rotateY(${px*8}deg) rotateX(${-py*8}deg) translateY(-4px)`;
+  });
+  card.addEventListener("pointerleave",()=>{card.style.transform="";});
+});
+
+/* glitch على كلمة الهم */
+const gl=document.getElementById("glitch"); const glReal="أنشئ.";
+const glChars="ABCDXY01أنشئتخيلبهر#@%";
+function glitchOnce(){
+  let i=0; const id=setInterval(()=>{
+    gl.textContent=glReal.split("").map((ch,k)=> k<i?ch:glChars[(Math.random()*glChars.length)|0]).join("");
+    i++; if(i>glReal.length){clearInterval(id);gl.textContent=glReal;}
+  },60);
+}
+setTimeout(glitchOnce,1200); setInterval(glitchOnce,7000);
+
+/* رفع الصور + سحب وإفلات */
+function applyFile(file,zone,key,inputId){
+  if(!file||!file.type.startsWith("image/")){ toast("الملف يجب أن يكون صورة"); return; }
+  const url=URL.createObjectURL(file); state[key]=url;
+  zone.classList.add("has-image"); zone.classList.remove("dragover");
+  zone.innerHTML=`<input id="${inputId}" type="file" accept="image/*" /><img src="${url}" alt="" /><span class="change-label">تغيير الصورة</span>`;
+  beep(620,.1,"sine"); bindUpload("#"+inputId,"#"+zone.id,key);
+}
+function bindUpload(inputId,zoneId,key){
+  const input=document.querySelector(inputId), zone=document.querySelector(zoneId);
+  input.addEventListener("change",()=>{ const f=input.files?.[0]; if(f) applyFile(f,zone,key,input.id); });
+  zone.addEventListener("dragover",e=>{e.preventDefault();zone.classList.add("dragover");});
+  zone.addEventListener("dragleave",()=>zone.classList.remove("dragover"));
+  zone.addEventListener("drop",e=>{e.preventDefault();const f=e.dataTransfer.files?.[0];if(f)applyFile(f,zone,key,input.id);});
+}
+bindUpload("#sourceInput","#sourceZone","source");
+bindUpload("#referenceInput","#referenceZone","reference");
+
+/* مزج فعلي للصورتين على canvas */
+function blendImages(srcUrl,refUrl,cb){
+  const a=new Image(), b=new Image(); let loaded=0;
+  a.crossOrigin=b.crossOrigin="anonymous";
+  function done(){ if(++loaded<2) return;
+    const cv=document.createElement("canvas"); cv.width=800; cv.height=600;
+    const c=cv.getContext("2d");
+    c.drawImage(a,0,0,cv.width,cv.height);
+    c.globalAlpha=.55; c.globalCompositeOperation="overlay"; c.drawImage(b,0,0,cv.width,cv.height);
+    c.globalAlpha=.35; c.globalCompositeOperation="screen"; c.drawImage(b,0,0,cv.width,cv.height);
+    c.globalAlpha=1; c.globalCompositeOperation="source-over";
+    // لمسة نيون
+    const g=c.createLinearGradient(0,0,cv.width,cv.height);
+    g.addColorStop(0,"rgba(0,240,255,.12)"); g.addColorStop(1,"rgba(255,43,214,.12)");
+    c.fillStyle=g; c.fillRect(0,0,cv.width,cv.height);
+    cb(cv.toDataURL("image/png"));
+  }
+  a.onload=b.onload=done; a.onerror=b.onerror=done; a.src=srcUrl; b.src=refUrl;
+}
+
+const STAGES=["تهيئة المحرك…","تحليل صورة المشروع…","استخلاص الطابع من المرجع…","دمج الخامات والإضاءة…","توليد التصور النهائي…"];
+
+generateButton.addEventListener("click",e=>{
+  if(state.isGenerating) return;
+  if(!state.source||!state.reference){ resultStage.innerHTML=`<div class="soft-alert">ارفع صورة المشروع والصورة المرجعية أولاً.</div>`; beep(180,.2,"sawtooth",.06); return; }
+  if(state.attempts<1){ resultStage.innerHTML=`<div class="soft-alert">لا توجد محاولات متبقية — اطلب زيادة من حسابي.</div>`; beep(180,.2,"sawtooth",.06); return; }
+
+  // موجة طاقة + اهتزاز
+  const sh=document.createElement("div"); sh.className="shock";
+  sh.style.left=e.clientX+"px"; sh.style.top=e.clientY+"px"; document.body.appendChild(sh);
+  setTimeout(()=>sh.remove(),600);
+  document.body.animate([{transform:"translate(0,0)"},{transform:"translate(-3px,2px)"},{transform:"translate(3px,-2px)"},{transform:"translate(0,0)"}],{duration:200});
+  beep(880,.12,"square",.06);
+
+  state.isGenerating=true; generateButton.disabled=true; generateButton.textContent="جاري التوليد...";
+  resultStage.innerHTML=`
+    <div class="gen-stage">
+      <img id="genPreview" src="${state.source}" />
+      <div class="scan"></div>
+      <div class="gen-info">
+        <div class="stage-txt" id="stageTxt">تهيئة المحرك…</div>
+        <div class="bar"><i id="barFill"></i></div>
+        <div class="pct" id="pctTxt">0%</div>
+      </div>
+    </div>`;
+  const barFill=document.querySelector("#barFill"), pctTxt=document.querySelector("#pctTxt"), stageTxt=document.querySelector("#stageTxt");
+  let pct=0; const total=2600; const step=40;
+  const id=setInterval(()=>{
+    pct=Math.min(100,pct+ (100/(total/step)) );
+    barFill.style.width=pct+"%"; pctTxt.textContent=Math.round(pct)+"%";
+    const si=Math.min(STAGES.length-1,Math.floor(pct/100*STAGES.length));
+    if(stageTxt.textContent!==STAGES[si]){ stageTxt.textContent=STAGES[si]; beep(500+si*80,.05,"sine",.05); }
+    if(pct>=100){
+      clearInterval(id);
+      const finish=(out)=>{
+        state.isGenerating=false; state.attempts=Math.max(0,state.attempts-1); state.used+=1;
+        syncAccount(); gallery.push(out); renderGallery(); persist();
+        generateButton.disabled=false; generateButton.textContent="توليد جديد";
+        chord(); toast("تم توليد التصور ✦");
+        resultStage.innerHTML=`<div class="mock-result"><img src="${out}" alt="" />
+          <div class="result-overlay"><strong>تم توليد التصور ✦</strong><small>اضغط أي صورة بالمعرض للرجوع لها.</small>
+          <a download="al-mulhim-result.png" href="${out}">تحميل النتيجة</a></div></div>`;
+      };
+      realGenerate(state.source,state.reference).then(apiOut=>{
+        if(apiOut) finish(apiOut);
+        else blendImages(state.source,state.reference,finish);
+      });
+    }
+  },step);
+});
+</script>
+</body>
+</html>

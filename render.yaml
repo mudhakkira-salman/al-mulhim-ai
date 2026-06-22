@@ -1,0 +1,5 @@
+services:
+  - type: static_site
+    name: al-mulhim-ai
+    buildCommand: npm install && npm run build
+    staticPublishPath: dist
