@@ -9,11 +9,10 @@
     "start": "node server.js",
     "preview": "vite preview --host 127.0.0.1"
   },
-  "devDependencies": {
-    "vite": "^7.2.7"
-  },
+  "devDependencies": {},
   "dependencies": {
     "better-sqlite3": "^12.4.6",
-    "express": "^5.2.1"
+    "express": "^5.2.1",
+    "vite": "^7.2.7"
   }
 }
