@@ -10,12 +10,12 @@ authShell.innerHTML = `
       </div>
     </div>
     <h1 id="authTitle">تسجيل الدخول</h1>
-    <p id="authIntro">ادخل بالبريد الإلكتروني أو رقم الجوال السعودي وكلمة المرور.</p>
+    <p id="authIntro">ادخل بالبريد الإلكتروني وكلمة المرور.</p>
     <form id="authForm">
       <label class="phone-field">
-        <span>البريد الإلكتروني أو الجوال</span>
+        <span>البريد الإلكتروني</span>
         <div>
-          <input id="authIdentifier" autocomplete="username" placeholder="example@email.com أو 05XXXXXXXX" required />
+          <input id="authEmail" type="email" autocomplete="email" placeholder="example@email.com" required />
         </div>
       </label>
       <label class="phone-field">
@@ -38,14 +38,13 @@ authShell.innerHTML = `
 document.body.appendChild(authShell);
 
 let mode = "login";
-let currentUser = null;
 
 const form = authShell.querySelector("#authForm");
 const title = authShell.querySelector("#authTitle");
 const intro = authShell.querySelector("#authIntro");
 const submit = authShell.querySelector("#authSubmit");
 const toggle = authShell.querySelector("#authToggle");
-const identifierInput = authShell.querySelector("#authIdentifier");
+const emailInput = authShell.querySelector("#authEmail");
 const passwordInput = authShell.querySelector("#authPassword");
 const message = authShell.querySelector("#authMessage");
 
@@ -63,10 +62,7 @@ function setBusy(isBusy) {
 function setMode(nextMode) {
   mode = nextMode;
   title.textContent = mode === "login" ? "تسجيل الدخول" : "إنشاء حساب";
-  intro.textContent =
-    mode === "login"
-      ? "ادخل بالبريد الإلكتروني أو رقم الجوال السعودي وكلمة المرور."
-      : "أنشئ حسابك بالبريد الإلكتروني أو رقم الجوال وكلمة مرور فقط.";
+  intro.textContent = mode === "login" ? "ادخل بالبريد الإلكتروني وكلمة المرور." : "أنشئ حسابك بالبريد الإلكتروني وكلمة مرور.";
   submit.textContent = mode === "login" ? "تسجيل الدخول" : "إنشاء حساب";
   toggle.textContent = mode === "login" ? "إنشاء حساب جديد" : "لدي حساب بالفعل";
   passwordInput.autocomplete = mode === "login" ? "current-password" : "new-password";
@@ -74,11 +70,10 @@ function setMode(nextMode) {
 }
 
 function applyUser(user) {
-  currentUser = user;
   document.body.classList.toggle("is-authenticated", Boolean(user));
   authShell.hidden = Boolean(user);
 
-  const label = user?.phone || user?.email || "مستخدم";
+  const label = user?.email || "مستخدم";
   const brand = document.querySelector(".brand");
   if (brand && user) brand.title = label;
 
@@ -104,7 +99,7 @@ async function api(path, body) {
   });
   const contentType = response.headers.get("content-type") || "";
   const data = contentType.includes("application/json") ? await response.json().catch(() => ({})) : {};
-  if (!response.ok) throw new Error(data.error || "خدمة الحسابات غير مفعلة على هذا النشر.");
+  if (!response.ok) throw new Error(data.error || "تعذر تنفيذ العملية.");
   return data;
 }
 
@@ -124,12 +119,11 @@ form.addEventListener("submit", async (event) => {
   try {
     const endpoint = mode === "login" ? "/api/login" : "/api/register";
     const data = await api(endpoint, {
-      identifier: identifierInput.value,
+      email: emailInput.value,
       password: passwordInput.value
     });
-    if (!data.user) throw new Error("خدمة الحسابات غير مفعلة على هذا النشر.");
+    if (!data.user) throw new Error("تعذر قراءة بيانات الحساب.");
     applyUser(data.user);
-    setMessage(mode === "login" ? "تم تسجيل الدخول." : "تم إنشاء الحساب.", "success");
   } catch (error) {
     setMessage(error.message, "error");
   } finally {

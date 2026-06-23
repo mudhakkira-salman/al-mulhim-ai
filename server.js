@@ -18,22 +18,6 @@ function normalizeEmail(email) {
   return value;
 }
 
-function normalizeSaudiPhone(phone) {
-  let digits = String(phone || "").replace(/\D/g, "");
-  if (digits.startsWith("966")) digits = digits.slice(3);
-  if (digits.startsWith("0")) digits = digits.slice(1);
-  if (!digits) return null;
-  if (!/^5\d{8}$/.test(digits)) throw new Error("أدخل رقم جوال سعودي صحيح يبدأ بـ 5.");
-  return `+966${digits}`;
-}
-
-function normalizeIdentifier(identifier) {
-  const value = String(identifier || "").trim();
-  if (!value) return { email: null, phone: null };
-  if (value.includes("@")) return { email: normalizeEmail(value), phone: null };
-  return { email: null, phone: normalizeSaudiPhone(value) };
-}
-
 function requirePassword(password) {
   const value = String(password || "");
   if (value.length < 8) throw new Error("كلمة المرور يجب ألا تقل عن 8 أحرف.");
@@ -48,23 +32,21 @@ function getCurrentUser(req) {
 
 app.post("/api/register", (req, res) => {
   try {
-    const { email, phone } = normalizeIdentifier(req.body.identifier || req.body.email || req.body.phone);
+    const email = normalizeEmail(req.body.email || req.body.identifier);
     const password = requirePassword(req.body.password);
 
-    if (!email && !phone) {
-      return res.status(400).json({ error: "أدخل البريد الإلكتروني أو رقم الجوال." });
+    if (!email) {
+      return res.status(400).json({ error: "أدخل البريد الإلكتروني." });
     }
 
-    const existing = db
-      .prepare("SELECT id FROM users WHERE (email IS NOT NULL AND email = ?) OR (phone IS NOT NULL AND phone = ?)")
-      .get(email, phone);
+    const existing = db.prepare("SELECT id FROM users WHERE email = ?").get(email);
     if (existing) {
-      return res.status(409).json({ error: "يوجد حساب مسجل بهذه البيانات." });
+      return res.status(409).json({ error: "يوجد حساب مسجل بهذا البريد الإلكتروني." });
     }
 
     const result = db
       .prepare("INSERT INTO users (phone, email, password_hash) VALUES (?, ?, ?)")
-      .run(phone, email, hashPassword(password));
+      .run(null, email, hashPassword(password));
     const user = db.prepare("SELECT * FROM users WHERE id = ?").get(result.lastInsertRowid);
     const cookie = createSessionCookie(user.id);
     res.setHeader("Set-Cookie", serializeCookie(cookie));
@@ -76,18 +58,15 @@ app.post("/api/register", (req, res) => {
 
 app.post("/api/login", (req, res) => {
   try {
-    const { email, phone } = normalizeIdentifier(req.body.identifier);
+    const email = normalizeEmail(req.body.email || req.body.identifier);
     const password = String(req.body.password || "");
-    if ((!email && !phone) || !password) {
-      return res.status(400).json({ error: "أدخل بيانات تسجيل الدخول." });
+    if (!email || !password) {
+      return res.status(400).json({ error: "أدخل البريد الإلكتروني وكلمة المرور." });
     }
 
-    const user = db
-      .prepare("SELECT * FROM users WHERE (email IS NOT NULL AND email = ?) OR (phone IS NOT NULL AND phone = ?)")
-      .get(email, phone);
-
+    const user = db.prepare("SELECT * FROM users WHERE email = ?").get(email);
     if (!user || !verifyPassword(password, user.password_hash)) {
-      return res.status(401).json({ error: "بيانات الدخول غير صحيحة." });
+      return res.status(401).json({ error: "البريد الإلكتروني أو كلمة المرور غير صحيحة." });
     }
 
     db.prepare("UPDATE users SET last_login_at = CURRENT_TIMESTAMP WHERE id = ?").run(user.id);
