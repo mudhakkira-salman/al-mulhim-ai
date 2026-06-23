@@ -72,6 +72,7 @@ function setMode(nextMode) {
 function applyUser(user) {
   document.body.classList.toggle("is-authenticated", Boolean(user));
   authShell.hidden = Boolean(user);
+  window.mulhimCurrentUser = user || null;
 
   const label = user?.email || "مستخدم";
   const brand = document.querySelector(".brand");
@@ -88,6 +89,10 @@ function applyUser(user) {
 
   const bar = document.querySelector("#attBar");
   if (bar && user) bar.textContent = user.balance ?? 0;
+
+  if (typeof window.applyMulhimAccount === "function") {
+    window.applyMulhimAccount(user);
+  }
 }
 
 async function api(path, body) {

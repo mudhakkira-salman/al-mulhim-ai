@@ -453,7 +453,7 @@ tick();
    لتفعيل التوليد الفعلي: حط رابط الـ backend الخاص فيك هنا.
    لا تضع مفتاح API مباشرة في هذا الملف — اجعل التوليد يمر عبر سيرفرك (Flask/Render).
    إن بقي فارغاً، يعمل المزج التجريبي تلقائياً. */
-const GENERATE_ENDPOINT = ""; // مثال: "https://your-app.onrender.com/generate"
+const GENERATE_ENDPOINT = "/api/generate";
 
 /* استرجاع الحالة المحفوظة */
 let saved={};
@@ -576,6 +576,16 @@ function syncAccount(){
   document.querySelector("#usedVal").textContent=state.used;
   const ab=document.querySelector("#attBar"); if(ab) ab.textContent=state.attempts;
 }
+window.applyMulhimAccount=function(user){
+  window.mulhimCurrentUser=user||null;
+  if(user){
+    state.attempts=user.balance??0;
+    state.used=user.generationsCount??0;
+  }
+  const adminBtn=document.querySelector("#adminBtn");
+  if(adminBtn) adminBtn.style.display=user?.isAdmin?"grid":"none";
+  syncAccount();
+};
 
 /* عرض المعرض */
 const galleryWrap=document.querySelector("#galleryWrap"), galleryEl=document.querySelector("#gallery");
@@ -593,40 +603,46 @@ function renderGallery(){
 }
 renderGallery();
 
-/* ===== لوحة الأدمن: مستخدمون محليون ===== */
+/* ===== لوحة الأدمن ===== */
 let users=[];
-try{ users=JSON.parse(localStorage.getItem("mulhim_users")||"[]"); }catch(e){}
-function persistUsers(){ try{ localStorage.setItem("mulhim_users",JSON.stringify(users)); }catch(e){} }
 const adminModal=document.querySelector("#adminModal");
 const adminGrid=document.querySelector("#adminGrid");
-function renderAdmin(){
+async function renderAdmin(){
+  try{
+    const res=await fetch("/api/admin/users",{credentials:"same-origin"});
+    const data=await res.json();
+    if(!res.ok) throw new Error(data.error||"تعذر تحميل المستخدمين");
+    users=data.users||[];
+  }catch(e){
+    adminGrid.innerHTML=`<div class="admin-empty">${e.message}</div>`;
+    return;
+  }
   if(!users.length){ adminGrid.innerHTML=`<div class="admin-empty">لا يوجد مستخدمون بعد — أضف مستخدماً بالأعلى.</div>`; return; }
   adminGrid.innerHTML=users.map((u,i)=>`
     <div class="urow">
-      <span class="uname">${u.name}</span>
-      <span class="uatt">${u.attempts} محاولة</span>
+      <span class="uname">${u.email}${u.isAdmin?" · Admin":""}</span>
+      <span class="uatt">${u.balance} محاولة</span>
       <button class="ubtn" data-act="plus" data-i="${i}" title="+10">＋</button>
       <button class="ubtn" data-act="minus" data-i="${i}" title="-10">－</button>
-      <button class="ubtn" data-act="del" data-i="${i}" title="حذف">🗑</button>
     </div>`).join("");
-  adminGrid.querySelectorAll(".ubtn").forEach(b=>b.addEventListener("click",()=>{
+  adminGrid.querySelectorAll(".ubtn").forEach(b=>b.addEventListener("click",async()=>{
     const i=+b.dataset.i, act=b.dataset.act;
-    if(act==="plus"){ users[i].attempts+=10; beep(740,.07); }
-    if(act==="minus"){ users[i].attempts=Math.max(0,users[i].attempts-10); beep(420,.07); }
-    if(act==="del"){ users.splice(i,1); beep(300,.1); }
-    persistUsers(); renderAdmin(); toast("تم التحديث");
+    const amount=act==="plus"?10:-10;
+    const res=await fetch(`/api/admin/users/${users[i].id}/balance`,{method:"POST",credentials:"same-origin",headers:{"Content-Type":"application/json"},body:JSON.stringify({amount})});
+    const data=await res.json().catch(()=>({}));
+    if(!res.ok){ toast(data.error||"تعذر التحديث"); return; }
+    beep(amount>0?740:420,.07); renderAdmin(); toast("تم التحديث");
   }));
 }
 renderAdmin();
-document.querySelector("#adminBtn").addEventListener("click",()=>{ adminModal.classList.add("is-open"); adminModal.setAttribute("aria-hidden","false"); renderAdmin(); beep(700,.08); });
+document.querySelector("#adminBtn").style.display="none";
+document.querySelector("#adminBtn").addEventListener("click",()=>{ if(!window.mulhimCurrentUser?.isAdmin){toast("لوحة الأدمن للأدمن فقط");return;} adminModal.classList.add("is-open"); adminModal.setAttribute("aria-hidden","false"); renderAdmin(); beep(700,.08); });
 document.querySelector("#closeAdmin").addEventListener("click",()=>{ adminModal.classList.remove("is-open"); adminModal.setAttribute("aria-hidden","true"); });
 adminModal.addEventListener("click",e=>{ if(e.target===adminModal){ adminModal.classList.remove("is-open"); adminModal.setAttribute("aria-hidden","true"); } });
 document.querySelector("#addUserBtn").addEventListener("click",()=>{
   const name=document.querySelector("#newUserName").value.trim();
   const att=parseInt(document.querySelector("#newUserAtt").value)||0;
-  if(!name){ toast("اكتب اسم المستخدم"); return; }
-  users.push({name,attempts:att}); persistUsers(); renderAdmin();
-  document.querySelector("#newUserName").value=""; beep(660,.1,"triangle"); toast("تمت إضافة "+name);
+  toast("أضف المستخدم من صفحة التسجيل، ثم ارفع رصيده من هنا.");
 });
 
 /* التوليد الحقيقي عبر backend (إن وُجد) — وإلا المزج التجريبي */
@@ -635,11 +651,12 @@ async function realGenerate(srcUrl,refUrl){
   try{
     const toB64=async u=>{const r=await fetch(u);const b=await r.blob();return await new Promise(res=>{const fr=new FileReader();fr.onload=()=>res(fr.result);fr.readAsDataURL(b);});};
     const [src,ref]=await Promise.all([toB64(srcUrl),toB64(refUrl)]);
-    const res=await fetch(GENERATE_ENDPOINT,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({source:src,reference:ref})});
-    if(!res.ok) throw new Error("HTTP "+res.status);
+    const res=await fetch(GENERATE_ENDPOINT,{method:"POST",credentials:"same-origin",headers:{"Content-Type":"application/json"},body:JSON.stringify({source:src,reference:ref})});
     const data=await res.json();
-    return data.image || data.url || null; // يتوقع {image:"data:..."} أو {url:"https://..."}
-  }catch(e){ toast("تعذّر الاتصال بمحرك التوليد — عرض تجريبي"); return null; }
+    if(!res.ok) throw new Error(data.error||"تعذر التوليد");
+    if(data.user) window.applyMulhimAccount(data.user);
+    return data.image || data.url || null;
+  }catch(e){ toast(e.message||"تعذّر الاتصال بمحرك التوليد"); return null; }
 }
 
 /* tilt 3D للبطاقات */
@@ -736,7 +753,7 @@ generateButton.addEventListener("click",e=>{
     if(pct>=100){
       clearInterval(id);
       const finish=(out)=>{
-        state.isGenerating=false; state.attempts=Math.max(0,state.attempts-1); state.used+=1;
+        state.isGenerating=false;
         syncAccount(); gallery.push(out); renderGallery(); persist();
         generateButton.disabled=false; generateButton.textContent="توليد جديد";
         chord(); toast("تم توليد التصور ✦");
@@ -746,7 +763,12 @@ generateButton.addEventListener("click",e=>{
       };
       realGenerate(state.source,state.reference).then(apiOut=>{
         if(apiOut) finish(apiOut);
-        else blendImages(state.source,state.reference,finish);
+        else{
+          state.isGenerating=false;
+          generateButton.disabled=false;
+          generateButton.textContent="توليد الآن";
+          resultStage.innerHTML=`<div class="soft-alert">تعذر التوليد. لم يتم خصم أي محاولة.</div>`;
+        }
       });
     }
   },step);

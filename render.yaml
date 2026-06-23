@@ -1,6 +1,6 @@
 services:
   - type: web
-    name: al-mulhim-ai
+    name: al-mulhim-ai-web
     runtime: node
     buildCommand: npm install && npm run build
     startCommand: npm run start
@@ -9,3 +9,5 @@ services:
         value: production
       - key: SESSION_SECRET
         generateValue: true
+      - key: GEMINI_API_KEY
+        sync: false
