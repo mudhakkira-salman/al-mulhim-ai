@@ -11,6 +11,7 @@ const app = express();
 const port = process.env.PORT || 5177;
 const canonicalHost = "al-mulhim-ai-web.onrender.com";
 const oldRenderHost = "al-mulhim-ai.onrender.com";
+const INITIAL_GENERATION_ATTEMPTS = 2;
 
 app.use(express.json({ limit: "30mb" }));
 
@@ -76,8 +77,8 @@ app.post("/api/register", (req, res) => {
     const usersCount = db.prepare("SELECT COUNT(*) AS count FROM users").get().count;
     const role = usersCount === 0 ? "admin" : "user";
     const result = db
-      .prepare("INSERT INTO users (phone, email, password_hash, role) VALUES (?, ?, ?, ?)")
-      .run(null, email, hashPassword(password), role);
+      .prepare("INSERT INTO users (phone, email, password_hash, role, balance) VALUES (?, ?, ?, ?, ?)")
+      .run(null, email, hashPassword(password), role, INITIAL_GENERATION_ATTEMPTS);
     const user = db.prepare("SELECT * FROM users WHERE id = ?").get(result.lastInsertRowid);
     const cookie = createSessionCookie(user.id);
     res.setHeader("Set-Cookie", serializeCookie(cookie));
