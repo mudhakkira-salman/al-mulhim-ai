@@ -9,8 +9,17 @@ import { clearSessionCookie, createSessionCookie, readSessionUserId, serializeCo
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const app = express();
 const port = process.env.PORT || 5177;
+const canonicalHost = "al-mulhim-ai-web.onrender.com";
+const oldRenderHost = "al-mulhim-ai.onrender.com";
 
 app.use(express.json({ limit: "30mb" }));
+
+app.use((req, res, next) => {
+  if (req.hostname === oldRenderHost) {
+    return res.redirect(308, `https://${canonicalHost}${req.originalUrl}`);
+  }
+  next();
+});
 
 function normalizeEmail(email) {
   const value = String(email || "").trim().toLowerCase();
@@ -104,6 +113,15 @@ app.post("/api/login", (req, res) => {
 app.post("/api/logout", (_req, res) => {
   res.setHeader("Set-Cookie", clearSessionCookie());
   res.json({ ok: true });
+});
+
+app.get("/api/status", (_req, res) => {
+  res.json({
+    ok: true,
+    service: "al-mulhim-ai-web",
+    canonicalUrl: `https://${canonicalHost}`,
+    geminiConfigured: Boolean(process.env.GEMINI_API_KEY)
+  });
 });
 
 app.get("/api/me", (req, res) => {
