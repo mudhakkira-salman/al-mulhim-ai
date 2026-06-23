@@ -13,7 +13,7 @@ import {
   markUserLogin,
   publicUser
 } from "./lib/db.js";
-import { MODEL as geminiModel, generateArchitecturalImage } from "./lib/gemini.js";
+import { generateArchitecturalImage } from "./lib/gemini.js";
 import { hashPassword, verifyPassword } from "./lib/passwords.js";
 import { clearSessionCookie, createSessionCookie, readSessionUserId, serializeCookie } from "./lib/sessions.js";
 
@@ -133,8 +133,6 @@ app.get("/api/status", (_req, res) => {
     ok: true,
     service: "al-mulhim-ai-web",
     canonicalUrl: `https://${canonicalHost}`,
-    geminiConfigured: Boolean(process.env.GEMINI_API_KEY),
-    geminiModel,
     databaseProvider,
     persistentDatabase: databaseProvider === "postgres"
   });
@@ -168,8 +166,14 @@ app.post("/api/generate", async (req, res) => {
 
     res.json({ image, user: publicUser(updated) });
   } catch (error) {
-    console.error("Generate failed", { userId: user.id, message: error.message });
-    res.status(500).json({ error: error.message || "تعذر توليد الصورة." });
+    console.error("Generate failed", {
+      userId: user.id,
+      reason: error.reason || "generation_failed",
+      message: error.message
+    });
+    res.status(503).json({
+      error: error.publicMessage || "لم ينجح التوليد حالياً. لم يتم خصم أي محاولة."
+    });
   }
 });
 
