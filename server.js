@@ -167,6 +167,33 @@ app.post("/api/admin/users/:id/balance", (req, res) => {
   res.json({ user: publicUser(user) });
 });
 
+app.post("/api/admin/users/balance-by-email", (req, res) => {
+  const admin = requireAdmin(req, res);
+  if (!admin) return;
+
+  try {
+    const email = normalizeEmail(req.body.email);
+    const amount = Number(req.body.amount || 0);
+    if (!email) {
+      return res.status(400).json({ error: "أدخل بريد المستخدم." });
+    }
+    if (!Number.isFinite(amount) || amount === 0) {
+      return res.status(400).json({ error: "أدخل عدد محاولات صحيح." });
+    }
+
+    const target = db.prepare("SELECT * FROM users WHERE email = ?").get(email);
+    if (!target) {
+      return res.status(404).json({ error: "المستخدم غير موجود. يجب أن ينشئ حساباً أولاً." });
+    }
+
+    db.prepare("UPDATE users SET balance = MAX(balance + ?, 0) WHERE id = ?").run(Math.trunc(amount), target.id);
+    const user = db.prepare("SELECT * FROM users WHERE id = ?").get(target.id);
+    res.json({ user: publicUser(user) });
+  } catch (error) {
+    res.status(400).json({ error: error.message || "تعذر تحديث الرصيد." });
+  }
+});
+
 app.post("/api/password-reset", (_req, res) => {
   res.status(501).json({ error: "استعادة كلمة المرور سيتم تفعيلها لاحقاً." });
 });

@@ -639,15 +639,27 @@ document.querySelector("#adminBtn").style.display="none";
 document.querySelector("#adminBtn").addEventListener("click",()=>{ if(!window.mulhimCurrentUser?.isAdmin){toast("لوحة الأدمن للأدمن فقط");return;} adminModal.classList.add("is-open"); adminModal.setAttribute("aria-hidden","false"); renderAdmin(); beep(700,.08); });
 document.querySelector("#closeAdmin").addEventListener("click",()=>{ adminModal.classList.remove("is-open"); adminModal.setAttribute("aria-hidden","true"); });
 adminModal.addEventListener("click",e=>{ if(e.target===adminModal){ adminModal.classList.remove("is-open"); adminModal.setAttribute("aria-hidden","true"); } });
-document.querySelector("#addUserBtn").addEventListener("click",()=>{
-  const name=document.querySelector("#newUserName").value.trim();
-  const att=parseInt(document.querySelector("#newUserAtt").value)||0;
-  toast("أضف المستخدم من صفحة التسجيل، ثم ارفع رصيده من هنا.");
+document.querySelector("#addUserBtn").addEventListener("click",async()=>{
+  const email=document.querySelector("#newUserName").value.trim();
+  const amount=parseInt(document.querySelector("#newUserAtt").value)||0;
+  if(!email||!amount){ toast("أدخل بريد المستخدم وعدد المحاولات"); return; }
+  const res=await fetch("/api/admin/users/balance-by-email",{
+    method:"POST",
+    credentials:"same-origin",
+    headers:{"Content-Type":"application/json"},
+    body:JSON.stringify({email,amount})
+  });
+  const data=await res.json().catch(()=>({}));
+  if(!res.ok){ toast(data.error||"تعذر إضافة المحاولات"); return; }
+  document.querySelector("#newUserName").value="";
+  await renderAdmin();
+  toast("تمت إضافة المحاولات");
 });
 
 /* التوليد الحقيقي عبر backend (إن وُجد) — وإلا المزج التجريبي */
 async function realGenerate(srcUrl,refUrl){
   if(!GENERATE_ENDPOINT) return null;
+  window.lastGenerateError="";
   try{
     const toB64=async u=>{const r=await fetch(u);const b=await r.blob();return await new Promise(res=>{const fr=new FileReader();fr.onload=()=>res(fr.result);fr.readAsDataURL(b);});};
     const [src,ref]=await Promise.all([toB64(srcUrl),toB64(refUrl)]);
@@ -656,7 +668,11 @@ async function realGenerate(srcUrl,refUrl){
     if(!res.ok) throw new Error(data.error||"تعذر التوليد");
     if(data.user) window.applyMulhimAccount(data.user);
     return data.image || data.url || null;
-  }catch(e){ toast(e.message||"تعذّر الاتصال بمحرك التوليد"); return null; }
+  }catch(e){
+    window.lastGenerateError=e.message||"تعذّر الاتصال بمحرك التوليد";
+    toast(window.lastGenerateError);
+    return null;
+  }
 }
 
 /* tilt 3D للبطاقات */
@@ -767,7 +783,7 @@ generateButton.addEventListener("click",e=>{
           state.isGenerating=false;
           generateButton.disabled=false;
           generateButton.textContent="توليد الآن";
-          resultStage.innerHTML=`<div class="soft-alert">تعذر التوليد. لم يتم خصم أي محاولة.</div>`;
+          resultStage.innerHTML=`<div class="soft-alert">${window.lastGenerateError||"تعذر التوليد."}<br>لم يتم خصم أي محاولة.</div>`;
         }
       });
     }
