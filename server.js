@@ -2,7 +2,7 @@ import express from "express";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { db, publicUser } from "./lib/db.js";
-import { generateArchitecturalImage } from "./lib/gemini.js";
+import { MODEL as geminiModel, generateArchitecturalImage } from "./lib/gemini.js";
 import { hashPassword, verifyPassword } from "./lib/passwords.js";
 import { clearSessionCookie, createSessionCookie, readSessionUserId, serializeCookie } from "./lib/sessions.js";
 
@@ -120,7 +120,8 @@ app.get("/api/status", (_req, res) => {
     ok: true,
     service: "al-mulhim-ai-web",
     canonicalUrl: `https://${canonicalHost}`,
-    geminiConfigured: Boolean(process.env.GEMINI_API_KEY)
+    geminiConfigured: Boolean(process.env.GEMINI_API_KEY),
+    geminiModel
   });
 });
 
