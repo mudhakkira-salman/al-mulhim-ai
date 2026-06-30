@@ -22,7 +22,7 @@ const app = express();
 const port = process.env.PORT || 5177;
 const canonicalHost = "al-mulhim-ai-web.onrender.com";
 const oldRenderHost = "al-mulhim-ai.onrender.com";
-const INITIAL_GENERATION_ATTEMPTS = 2;
+const INITIAL_GENERATION_ATTEMPTS = 0;
 
 app.use(express.json({ limit: "30mb" }));
 
@@ -149,7 +149,7 @@ app.post("/api/generate", async (req, res) => {
   if (!user) return;
 
   if (user.balance < 1) {
-    return res.status(402).json({ error: "لا توجد محاولات كافية. اشحن رصيدك من حسابي." });
+    return res.status(402).json({ error: "لا توجد محاولات كافية. تواصل عبر واتساب لشراء محاولات جديدة." });
   }
 
   try {

@@ -1,16 +1,16 @@
 import "./styles.css";
 
 const state = {
-  balance: 120,
-  attempts: 4,
-  used: 80,
+  balance: 0,
+  attempts: 0,
+  used: 0,
   source: null,
   reference: null,
   isGenerating: false
 };
 
 const whatsappUrl =
-  "https://wa.me/966500830902?text=%D8%A7%D9%84%D8%B3%D9%84%D8%A7%D9%85%20%D8%B9%D9%84%D9%8A%D9%83%D9%85%D8%8C%20%D8%A3%D8%B1%D8%BA%D8%A8%20%D9%81%D9%8A%20%D8%B4%D8%AD%D9%86%20%D8%B1%D8%B5%D9%8A%D8%AF%20%D9%84%D9%85%D9%86%D8%B5%D8%A9%20%D8%A7%D9%84%D9%85%D9%84%D9%87%D9%85%20AI.";
+  "https://wa.me/966500830902?text=%D8%A7%D9%84%D8%B3%D9%84%D8%A7%D9%85%20%D8%B9%D9%84%D9%8A%D9%83%D9%85%D8%8C%20%D8%A3%D8%B1%D8%BA%D8%A8%20%D8%A8%D8%B4%D8%B1%D8%A7%D8%A1%20%D9%85%D8%AD%D8%A7%D9%88%D9%84%D8%A7%D8%AA%20%D8%AA%D9%88%D9%84%D9%8A%D8%AF%20%D9%81%D9%8A%20%D9%85%D9%86%D8%B5%D8%A9%20%D8%A7%D9%84%D9%85%D9%84%D9%87%D9%85%20AI.";
 
 document.querySelector("#app").innerHTML = `
   <main class="app-shell">
@@ -46,7 +46,7 @@ document.querySelector("#app").innerHTML = `
       </div>
       <div class="status-card glass">
         <span>الرصيد</span>
-        <strong id="balanceText">${state.balance} كوينز</strong>
+        <strong id="balanceText">${state.attempts} محاولة</strong>
       </div>
     </section>
 
@@ -94,8 +94,8 @@ document.querySelector("#app").innerHTML = `
 
     <section class="actions glass">
       <div>
-        <strong>تكلفة التوليد: 30 كوينز</strong>
-        <span>ارفع الصورتين ثم ابدأ التوليد.</span>
+        <strong>كل توليد = محاولة واحدة</strong>
+        <span>لشراء محاولات جديدة تواصل عبر واتساب.</span>
       </div>
       <button class="generate-button" id="generateButton">توليد الآن</button>
     </section>
@@ -106,11 +106,11 @@ document.querySelector("#app").innerHTML = `
         <span class="badge">حسابي</span>
         <h2>ملخص الحساب</h2>
         <div class="account-grid">
-          <div><span>الرصيد</span><strong>${state.balance} كوينز</strong></div>
+          <div><span>المحاولات المتبقية</span><strong>${state.attempts}</strong></div>
           <div><span>عدد محاولات توليد صورة جديدة</span><strong>${state.attempts}</strong></div>
-          <div><span>الاستهلاك</span><strong>${state.used} كوينز</strong></div>
+          <div><span>الاستهلاك</span><strong>${state.used} محاولة</strong></div>
         </div>
-        <a class="buy-button" href="${whatsappUrl}" target="_blank" rel="noreferrer">شراء رصيد عبر واتساب</a>
+        <a class="buy-button" href="${whatsappUrl}" target="_blank" rel="noreferrer">شراء محاولات عبر واتساب</a>
       </div>
     </div>
   </main>
